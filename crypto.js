@@ -147,7 +147,6 @@ function updateOriginalBalance(accountId, originalBalance) {
     });
 }
 function updateCryptoBalances(accountId, cryptoBalances) {
-    console.log(cryptoBalances);
     var query = `REPLACE INTO crypto_balances VALUES('${accountId}', '${cryptoBalances}')`
     db.run(query, (err) => {
         if (err) {

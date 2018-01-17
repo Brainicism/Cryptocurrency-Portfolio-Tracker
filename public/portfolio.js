@@ -2,20 +2,12 @@ var totalProfit;
 var prevProfit;
 var historicalGraph;
 var firstBarUpdate = false;
-var priceData;
-var dateArray;
+var historicalPriceDataArray;
 $(document).ready(function () {
     setUpGraph();
-    updateGraph();
+    initUserData();
     updateData();
     setInterval(updateData, 60000);
-
-    window.onkeyup = function (e) {
-        var key = e.keyCode ? e.keyCode : e.which;
-        if (key == 81) {
-            // promptInfo();
-        }
-    }
 });
 function getConfigInfo() {
     var data = {};
@@ -128,30 +120,31 @@ const changeFavicon = link => {
     }
 }
 
-function updateGraph() {
+function initUserData() {
     $.ajax({
         url: "/crypto/api/user/" + getAccountId(),
         type: "GET",
         success: function (data) {
-            console.log(data);
             var historicalData = data.historicalData;
-            historicalGraph.data.labels = historicalData.dateArray.reverse();
-            priceData = historicalData.priceData;
-            dateArray = historicalData.dateArray;
-            console.log
+            historicalPriceDataArray = historicalData.priceData.reverse();
+            var historicalDateArray = historicalData.dateArray.reverse();
+            updateGraph(historicalPriceDataArray, historicalDateArray);
             if (data.originalBalance) $("#originalBalance").val(data.originalBalance)
             if (data.cryptoBalances) $("#cryptoBalances").text(data.cryptoBalances.balance)
-            
-            var profitData = historicalData.priceData.map((d) => {
-                return (d.total - d.orig).toFixed(2);
-            });
-            historicalGraph.data.datasets[0].data = profitData.reverse();
-            historicalGraph.update();
         },
         error: function (jXHR, textStatus, errorThrown) {
             showError(jXHR.status + " " + jXHR.statusText + ". Try again later.")
         }
     });
+}
+
+function updateGraph(priceArray, dateArray) {
+    historicalGraph.data.labels = dateArray;
+    var profitData = priceArray.map((d) => {
+        return (parseFloat(d.total) - parseFloat(d.orig)).toFixed(2);
+    });
+    historicalGraph.data.datasets[0].data = profitData;
+    historicalGraph.update();
 }
 function showError(message) {
     $("#data").hide();
@@ -169,14 +162,13 @@ function priceToString(price) {
 function getAccountId(index) {
     var str = window.location.href;
     var accountId = str.split("/")[4];
-    console.log(accountId)
     return (accountId) ? accountId : 1;
 }
 function setUpGraph() {
     var ctx = document.getElementById("historicalGraph").getContext('2d');
     document.getElementById("historicalGraph").onclick = function (evt) {
         var activePoints = historicalGraph.getElementsAtEvent(evt)[0]["_index"];
-        alert   (formatResponseData(priceData[activePoints]));
+        alert(formatResponseData(historicalPriceDataArray[activePoints]));
     };
     historicalGraph = new Chart(ctx, {
         type: 'bar',
