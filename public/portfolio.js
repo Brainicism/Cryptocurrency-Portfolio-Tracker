@@ -22,7 +22,7 @@ function getConfigInfo() {
     data.originalBalance = $("#originalBalance").val();
     data.cryptoBalances = $("#cryptoBalances").val();
     $.ajax({
-        url: "/api/coins/config/" + getAccountId(),
+        url: "/crypto/api/config/" + getAccountId(),
         type: "POST",
         data: data,
         success: function (data) {
@@ -42,7 +42,7 @@ function promptInfo() {
         return showError("Values must be numbers");
     }
     $.ajax({
-        url: "/api/coins/config/" + getAccountId(),
+        url: "/crypto/api/config/" + getAccountId(),
         type: "POST",
         data: data,
         success: function (data) {
@@ -75,7 +75,7 @@ function updateData() {
     $("#data").hide();
     $("#message").hide();
     $.ajax({
-        url: "/api/coins/" + getAccountId(),
+        url: "/crypto/api/" + getAccountId(),
         type: "GET",
         success: function (data) {
             $("#loading_spinner").hide();
@@ -130,7 +130,7 @@ const changeFavicon = link => {
 
 function updateGraph() {
     $.ajax({
-        url: "/api/coins/graph/" + getAccountId(),
+        url: "/crypto/api/graph/" + getAccountId(),
         type: "GET",
         success: function (data) {
             historicalGraph.data.labels = data.dateArray.reverse();

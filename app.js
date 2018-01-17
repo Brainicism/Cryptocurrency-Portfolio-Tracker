@@ -6,8 +6,8 @@ var crypto = require("./crypto.js");
 var path = require("path");
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
-app.use('/static', express.static('public'))
-app.get("/api/coins/graph/:accountId", function (req, res) {
+app.use('/crypto/static', express.static('public'))
+app.get("/crypto/api/graph/:accountId", function (req, res) {
     var accountId = req.params.accountId;
     crypto.getHistoricalData(accountId).then((data) => {
         res.status(200).send(data);
@@ -16,7 +16,7 @@ app.get("/api/coins/graph/:accountId", function (req, res) {
     })
 })
 
-app.post("/api/coins/config/:accountId", function (req, res) {
+app.post("/crypto/api/config/:accountId", function (req, res) {
     var data = req.body;
     var accountId = req.params.accountId;
     var config = {
@@ -28,7 +28,7 @@ app.post("/api/coins/config/:accountId", function (req, res) {
     res.status(200).end();
 })
 
-app.get("/api/coins/:accountId", function (req, res) {
+app.get("/crypto/api/:accountId", function (req, res) {
     var accountId = req.params.accountId;
     crypto.getValues(accountId).then((value) => {
         res.status(200).send(value);
@@ -42,13 +42,13 @@ app.get("/api/coins/:accountId", function (req, res) {
     });
 });
 
-app.get("/app/coins/", function (req, res) {
+app.get("/crypto", function (req, res) {
     res.sendFile(__dirname + "/public/coin.html")
 });
 
-app.get("/app/coins/:accountId", function (req, res) {
+app.get("/crypto/app/:accountId", function (req, res) {
     res.sendFile(__dirname + "/public/coin.html")
 });
 
 
-var server = app.listen(1234);
+var server = app.listen(1235);
