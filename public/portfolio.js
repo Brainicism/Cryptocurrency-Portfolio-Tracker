@@ -47,11 +47,8 @@ function promptInfo() {
         data: data,
         success: function (data) {
             updateData();
-            console.log("Update?");
         },
         error: function (jXHR, textStatus, errorThrown) {
-            console.log("Updatedddd?");
-
             showError(jXHR.status + " " + jXHR.statusText + ". Try again later.")
         }
     });
@@ -87,7 +84,7 @@ function updateData() {
             obj.html(obj.html().replace(/\n/g, '<br/>'));
             $("#last_update").text("Last Update: " + new Date());
 
-            totalProfit = (data.total - data.orig).toFixed(2);
+            totalProfit = parseFloat((data.total - data.orig).toFixed(2));
             var raw_date = new Date();
             var date = moment(raw_date.getTime());
             var dateString = moment(raw_date.getTime()).format('MM/D h:mm a');
@@ -136,14 +133,12 @@ function updateGraph() {
         url: "/api/coins/graph/" + getAccountId(),
         type: "GET",
         success: function (data) {
-            console.log(data);
             historicalGraph.data.labels = data.dateArray.reverse();
             priceData = data.priceData;
             dateArray = data.dateArray;
             var profitData = data.priceData.map((d) => {
                 return (d.total - d.orig).toFixed(2);
             });
-            console.log(profitData);
             historicalGraph.data.datasets[0].data = profitData.reverse();
             historicalGraph.update();
         },
