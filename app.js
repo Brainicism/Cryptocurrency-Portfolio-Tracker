@@ -51,6 +51,4 @@ app.get("/app/coins/:accountId", function (req, res) {
 });
 
 
-var server = app.listen(1234, function () {
-    console.log('Example app listening on port 1234!');
-})
+var server = app.listen(1234);

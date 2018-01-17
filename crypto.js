@@ -110,8 +110,6 @@ function getCoinPrices() {
         })
     })
 }
-recurringDbUpdate("1")
-
 function updateOriginalBalance(accountId, originalBalance) {
     var query = `REPLACE INTO original_balance VALUES('${accountId}', ${originalBalance})`
     db.run(query, (err) => {
@@ -155,9 +153,15 @@ function addNewPriceData(accountId, date, priceData) {
         }
     })
 }
-
 var j = schedule.scheduleJob('*/5 * * * *', function () {
-    recurringDbUpdate("1");
+    db.all(`SELECT account_id from crypto_balances`, (err, rows) => {
+        if (err) {
+            console.log(err);
+        }
+        for (var i = 0; i < rows.length; i++) {
+            recurringDbUpdate(rows[i].account_id);
+        }
+    })
 });
 
 function recurringDbUpdate(accountId) {
