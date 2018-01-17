@@ -7,7 +7,7 @@ var path = require("path");
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 app.use('/crypto/static', express.static('public'))
-app.get("/crypto/api/graph/:accountId", function (req, res) {
+app.get("/crypto/api/user/:accountId", function (req, res) {
     var accountId = req.params.accountId;
     crypto.getUserData(accountId).then((data) => {
         res.status(200).send(data);
@@ -28,9 +28,9 @@ app.post("/crypto/api/config/:accountId", function (req, res) {
     res.status(200).end();
 })
 
-app.get("/crypto/api/:accountId", function (req, res) {
+app.get("/crypto/api/update/:accountId", function (req, res) {
     var accountId = req.params.accountId;
-    crypto.getValues(accountId).then((value) => {
+    crypto.update(accountId).then((value) => {
         res.status(200).send(value);
     }).catch((err) => {
         if (err.startsWith("Values not set")) {

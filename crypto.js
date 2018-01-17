@@ -252,6 +252,6 @@ function saveConfig(config) {
     updateOriginalBalance(config.accountId, config.originalBalance);
     updateCryptoBalances(config.accountId, config.cryptoBalances);
 }
-module.exports.getValues = update;
+module.exports.update = update;
 module.exports.getUserData = getUserData;
 module.exports.saveConfig = saveConfig;

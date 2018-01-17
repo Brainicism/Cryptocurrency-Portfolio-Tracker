@@ -75,7 +75,7 @@ function updateData() {
     $("#data").hide();
     $("#message").hide();
     $.ajax({
-        url: "/crypto/api/" + getAccountId(),
+        url: "/crypto/api/update/" + getAccountId(),
         type: "GET",
         success: function (data) {
             $("#loading_spinner").hide();
@@ -130,7 +130,7 @@ const changeFavicon = link => {
 
 function updateGraph() {
     $.ajax({
-        url: "/crypto/api/graph/" + getAccountId(),
+        url: "/crypto/api/user/" + getAccountId(),
         type: "GET",
         success: function (data) {
             console.log(data);
