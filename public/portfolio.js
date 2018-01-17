@@ -96,10 +96,10 @@ function updateData() {
                 $("#total").text("Total Profit: " + priceToString(totalProfit));
                 document.title = priceToString(totalProfit);
                 if (totalProfit > 0) {
-                    changeFavicon("/static/jisoo_happy.png");
+                    changeFavicon("/crypto/static/jisoo_happy.png");
                 }
                 else {
-                    changeFavicon("/static/jisoo_angry.png");
+                    changeFavicon("/crypto/static/jisoo_angry.png");
                 }
             }
         },
