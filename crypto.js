@@ -7,7 +7,7 @@ var schedule = require('node-schedule');
 var redis = require("redis");
 var redisClient = redis.createClient();
 const sqlite3 = require('sqlite3').verbose();
-
+var firstRun = true;
 
 redisClient.on('error', function (err) {
     console.log("Error " + err);
@@ -31,7 +31,7 @@ function update(accountId) {
                 var originalBalance = result[0];
                 var cryptoBalances = result[1];
                 if (originalBalance == null || cryptoBalances == null) {
-                    return reject("Values not set, press q to set values");
+                    return reject("Values not set");
                 }
                 var output = [];
                 var total = 0;
@@ -68,6 +68,22 @@ function getUserBalances(accountId) {
             .catch(err => reject(err));
     })
 }
+function getRawCryptoBalances(accountId) {
+    return new Promise((resolve, reject) => {
+        var query = `SELECT balance from crypto_balances WHERE account_id = '${accountId}'`;
+        db.all(query, (err, rows) => {
+            if (err) {
+                return reject(err)
+            }
+            if (rows.length == 1) {
+                return resolve(rows[0]);
+            }
+            else {
+                return resolve(null);
+            }
+        })
+    })
+}
 function getCryptoBalances(accountId) {
     return new Promise((resolve, reject) => {
         var query = `SELECT balance from crypto_balances WHERE account_id = '${accountId}'`;
@@ -79,7 +95,7 @@ function getCryptoBalances(accountId) {
                 var result = rows[0].balance.split("\n");
                 var cryptoBalances = {};
                 for (var i = 0; i < result.length; i++) {
-                    cryptoBalances[result[i].split(":")[0]] = result[i].split(":")[1].trim();
+                    cryptoBalances[result[i].split(":")[0].trim()] = result[i].split(":")[1].trim();
                 }
                 return resolve(cryptoBalances);
             }
@@ -93,10 +109,11 @@ function getCryptoBalances(accountId) {
 function getCoinPrices() {
     return new Promise((resolve, reject) => {
         redisClient.get("coin_prices", (err, result) => {
-            if (result) {
+            if (!firstRun && result) {
                 resolve(JSON.parse(result));
             }
             else {
+                firstRun = false;
                 request("https://api.coinmarketcap.com/v1/ticker/?convert=CAD&limit=0", (err, response, body) => {
                     if (err) {
                         reject(err);
@@ -214,10 +231,27 @@ function getHistoricalData(accountId) {
     })
 }
 
+function getUserData(accountId) {
+    return new Promise((resolve, reject) => {
+        Promise.all([getRawCryptoBalances(accountId), getOriginalBalance(accountId), getHistoricalData(accountId)])
+            .then((results) => {
+                var cryptoBalances = results[0];
+                var originalBalance = results[1];
+                var historicalData = results[2];
+                resolve({
+                    cryptoBalances: cryptoBalances,
+                    originalBalance: originalBalance,
+                    historicalData: historicalData
+                })
+            })
+            .catch((err) => { console.log(err); reject(err) });
+    });
+}
+
 function saveConfig(config) {
     updateOriginalBalance(config.accountId, config.originalBalance);
     updateCryptoBalances(config.accountId, config.cryptoBalances);
 }
 module.exports.getValues = update;
-module.exports.getHistoricalData = getHistoricalData;
+module.exports.getUserData = getUserData;
 module.exports.saveConfig = saveConfig;

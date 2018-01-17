@@ -133,10 +133,16 @@ function updateGraph() {
         url: "/crypto/api/graph/" + getAccountId(),
         type: "GET",
         success: function (data) {
-            historicalGraph.data.labels = data.dateArray.reverse();
-            priceData = data.priceData;
-            dateArray = data.dateArray;
-            var profitData = data.priceData.map((d) => {
+            console.log(data);
+            var historicalData = data.historicalData;
+            historicalGraph.data.labels = historicalData.dateArray.reverse();
+            priceData = historicalData.priceData;
+            dateArray = historicalData.dateArray;
+            console.log
+            if (data.originalBalance) $("#originalBalance").val(data.originalBalance)
+            if (data.cryptoBalances) $("#cryptoBalances").text(data.cryptoBalances.balance)
+            
+            var profitData = historicalData.priceData.map((d) => {
                 return (d.total - d.orig).toFixed(2);
             });
             historicalGraph.data.datasets[0].data = profitData.reverse();
@@ -162,7 +168,8 @@ function priceToString(price) {
 }
 function getAccountId(index) {
     var str = window.location.href;
-    var accountId = str.split("/")[5];
+    var accountId = str.split("/")[4];
+    console.log(accountId)
     return (accountId) ? accountId : 1;
 }
 function setUpGraph() {

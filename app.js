@@ -9,7 +9,7 @@ app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 app.use('/crypto/static', express.static('public'))
 app.get("/crypto/api/graph/:accountId", function (req, res) {
     var accountId = req.params.accountId;
-    crypto.getHistoricalData(accountId).then((data) => {
+    crypto.getUserData(accountId).then((data) => {
         res.status(200).send(data);
     }).catch((err) => {
         res.status(400).send(err);
@@ -46,7 +46,7 @@ app.get("/crypto", function (req, res) {
     res.sendFile(__dirname + "/public/coin.html")
 });
 
-app.get("/crypto/app/:accountId", function (req, res) {
+app.get("/crypto/:accountId", function (req, res) {
     res.sendFile(__dirname + "/public/coin.html")
 });
 
