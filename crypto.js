@@ -4,8 +4,14 @@ var lastCoinMarketCapUpdate;
 var fs = require("fs");
 var moment = require("moment");
 var schedule = require('node-schedule');
-
+var redis = require("redis");
+var redisClient = redis.createClient();
 const sqlite3 = require('sqlite3').verbose();
+
+
+redisClient.on('error', function (err) {
+    console.log("Error " + err);
+});
 let db = new sqlite3.Database('./db/main.db', (err) => {
     if (err) {
         console.error(err);
@@ -86,27 +92,32 @@ function getCryptoBalances(accountId) {
 
 function getCoinPrices() {
     return new Promise((resolve, reject) => {
-        if (lastCoinMarketCapUpdate != null && getTimeDiff(lastCoinMarketCapUpdate, new Date()) < 30) {
-            return resolve();
-        }
-        request("https://api.coinmarketcap.com/v1/ticker/?convert=CAD&limit=0", (err, response, body) => {
-            if (err) {
-                reject(err);
+        redisClient.get("coin_prices", (err, result) => {
+            if (result) {
+                resolve(JSON.parse(result));
             }
-            lastCoinMarketCapUpdate = new Date();
-            var ticker_data = JSON.parse(body);
-            var prices = ticker_data.map((a) => {
-                //TODO: map exceptions in a better way
-                if (a.symbol == "MIOTA") {
-                    a.symbol = "IOTA";
-                }
-                return a;
-            })
-            coin_prices = [];
-            for (var i = 0; i < prices.length; i++) {
-                coin_prices[prices[i].symbol] = prices[i].price_cad;
+            else {
+                request("https://api.coinmarketcap.com/v1/ticker/?convert=CAD&limit=0", (err, response, body) => {
+                    if (err) {
+                        reject(err);
+                    }
+                    lastCoinMarketCapUpdate = new Date();
+                    var ticker_data = JSON.parse(body);
+                    var prices = ticker_data.map((a) => {
+                        //TODO: map exceptions in a better way
+                        if (a.symbol == "MIOTA") {
+                            a.symbol = "IOTA";
+                        }
+                        return a;
+                    })
+                    coin_prices = [];
+                    for (var i = 0; i < prices.length; i++) {
+                        coin_prices[prices[i].symbol] = prices[i].price_cad;
+                    }
+                    redisClient.setex("coin_prices", 30, JSON.stringify(coin_prices));
+                    resolve(coin_prices);
+                })
             }
-            resolve(coin_prices);
         })
     })
 }
