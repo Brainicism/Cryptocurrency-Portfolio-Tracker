@@ -46,19 +46,24 @@ function promptInfo() {
     });
 }
 
-function formatResponseData(text) {
-    var coin_info = text.coin_info;
+function formatResponseData(data, showChange) {
+    var coin_info = data.coin_info;
     var string = "";
     var sum = 0;
     for (var i = 0; i < coin_info.length; i++) {
         var coin = coin_info[i];
         if (parseFloat(coin.cad_value) > 5) {
             sum += parseFloat(coin.cad_value);
-            string += coin.balance + " " + coin.symbol + " @ " + coin.cost_per_coin + "/CAD = $" + coin.cad_value + "\n";
+            var currentPriceString = `${coin.cost_per_coin.current ? coin.cost_per_coin.current : coin.cost_per_coin}`
+            if (showChange) {
+                var increaseInPastDay = (((coin.cost_per_coin.current - coin.cost_per_coin.pastDay) / coin.cost_per_coin.current) * 100);
+                currentPriceString += ` (${increaseInPastDay > 0 ? "+" + increaseInPastDay.toFixed(2) : increaseInPastDay.toFixed(2)}%)`;
+            }
+            string += `${coin.balance} ${coin.symbol} @ $${currentPriceString} = $${coin.cad_value}\n`;
         }
     }
     string += "\nTotal Amount: $" + Math.round(sum);
-    string += "\nOriginal Amount: $" + text.orig;
+    string += "\nOriginal Amount: $" + data.orig;
     return string;
 }
 
@@ -70,13 +75,13 @@ function updateData() {
         url: "/crypto/api/update/" + getAccountId(),
         type: "GET",
         success: function (data) {
+            console.log(data)
             $("#loading_spinner").hide();
             $("#data").show();
-            var obj = $("#coins_data").text(formatResponseData(data));
+            var obj = $("#coins_data").text(formatResponseData(data, true));
             obj.html(obj.html().replace(/\n/g, '<br/>'));
             $("#last_update").text("Last Update: " + new Date());
-
-            totalProfit = parseFloat((data.total - data.orig).toFixed(2));
+            totalProfit = parseFloat((data.total.current - data.orig).toFixed(2));
             var raw_date = new Date();
             var date = moment(raw_date.getTime());
             var dateString = moment(raw_date.getTime()).format('MM/D h:mm a');
@@ -141,7 +146,8 @@ function initUserData() {
 function updateGraph(priceArray, dateArray) {
     historicalGraph.data.labels = dateArray;
     var profitData = priceArray.map((d) => {
-        return (parseFloat(d.total) - parseFloat(d.orig)).toFixed(2);
+        //TODO: temp fix until data rolls off
+        return (parseFloat(d.total.current) - parseFloat(d.orig)).toFixed(2);
     });
     historicalGraph.data.datasets[0].data = profitData;
     historicalGraph.update();
@@ -168,7 +174,7 @@ function setUpGraph() {
     var ctx = document.getElementById("historicalGraph").getContext('2d');
     document.getElementById("historicalGraph").onclick = function (evt) {
         var activePoints = historicalGraph.getElementsAtEvent(evt)[0]["_index"];
-        alert(formatResponseData(historicalPriceDataArray[activePoints]));
+        alert(formatResponseData(historicalPriceDataArray[activePoints], false));
     };
     historicalGraph = new Chart(ctx, {
         type: 'bar',

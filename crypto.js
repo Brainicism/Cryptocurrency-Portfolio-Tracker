@@ -22,28 +22,43 @@ let db = new sqlite3.Database('./db/main.db', (err) => {
     console.log('Connected to the sick database.');
 });
 
-
 function update(accountId) {
     return new Promise((resolve, reject) => {
-        getCoinPrices()
-            .then(() => { return getUserBalances(accountId) })
-            .then((result) => {
-                var originalBalance = result[0];
-                var cryptoBalances = result[1];
+
+        Promise.all([getCoinPrices(), getUserBalances(accountId), getHistoricalData(accountId)])
+            .then((results) => {
+                var historicalPriceData = results[2].priceData;
+                var pastDayPrices;
+                var originalBalance = results[1][0];
+                var cryptoBalances = results[1][1];
+                if (historicalPriceData.length > 288) {
+                    pastDayPrices = historicalPriceData[288];
+                }
+                else if (historicalPriceData.length > 0) {
+                    pastDayPrices = historicalPriceData[historicalPriceData.length - 1];
+                }
+                else {
+                    pastDayPrices = null;
+                }
                 if (originalBalance == null || cryptoBalances == null) {
                     return reject("Values not set");
                 }
                 var output = [];
                 var total = 0;
+
                 for (var symbol in coin_prices) {
                     if (coin_prices.hasOwnProperty(symbol)) {
                         if (cryptoBalances[symbol] != null) {
                             var price = parseFloat(coin_prices[symbol]);
                             var cad_value = parseFloat((cryptoBalances[symbol] * price).toFixed(2))
+                            var pastCostPerCoin = pastDayPrices ? pastDayPrices.coin_info.filter((info) => info.symbol == symbol)[0].cost_per_coin.current : null;
                             output.push({
                                 symbol: symbol,
                                 balance: cryptoBalances[symbol],
-                                cost_per_coin: price.toFixed(2),
+                                cost_per_coin: {
+                                    current: price.toFixed(2),
+                                    pastDay: pastCostPerCoin
+                                },
                                 cad_value: cad_value
                             });
                             total += cad_value;
@@ -52,10 +67,16 @@ function update(accountId) {
                 }
                 output.sort((a, b) => { return a.cad_value < b.cad_value })
                 resolve({
-                    total: total,
+                    total: {
+                        current: total,
+                        pastDay: pastDayPrices ? pastDayPrices.total : null
+                    },
                     coin_info: output,
                     orig: originalBalance
                 })
+            })
+            .catch((err) => {
+                reject(err);
             })
     })
 }
@@ -194,7 +215,7 @@ var j = schedule.scheduleJob('*/5 * * * *', function () {
 function recurringDbUpdate(accountId) {
     update(accountId).then((output) => {
         var date = new Date();
-        console.log("Recurring update: Updating DB at " + moment(date.getTime()).format('MM/D h:mm a') + " | " + (output.total - output.orig))
+        console.log("Recurring update: Updating DB at " + moment(date.getTime()).format('MM/D h:mm a') + " | " + (output.total.current - output.orig))
         try {
             addNewPriceData(accountId, Math.floor(date.getTime() / 1000), JSON.stringify(output));
         }
@@ -221,6 +242,7 @@ function getHistoricalData(accountId) {
             var data = {};
             data.priceData = rows.map(function callback(currentValue, index, array) {
                 return JSON.parse(currentValue.price_data);
+                
             });
             data.dateArray = rows.map(function callback(currentValue, index, array) {
                 return moment(new Date(currentValue.date * 1000)).format('MM/D h:mm a');
