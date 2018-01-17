@@ -215,7 +215,7 @@ function getTimeDiff(date1, date2) {
 
 function getHistoricalData(accountId) {
     return new Promise((resolve, reject) => {
-        db.all('SELECT date, price_data FROM prices WHERE account_id = ' + accountId + ' ORDER BY date DESC LIMIT 576', (err, rows) => {
+        db.all(`SELECT date, price_data FROM prices WHERE account_id = '${accountId}' ORDER BY date DESC LIMIT 576`, (err, rows) => {
             if (err) {
                 return reject(err);
             }
