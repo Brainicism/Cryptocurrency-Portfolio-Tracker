@@ -174,8 +174,7 @@ function setUpGraph() {
     var ctx = document.getElementById("historicalGraph").getContext('2d');
     document.getElementById("historicalGraph").onclick = function (evt) {
         var activePoints = historicalGraph.getElementsAtEvent(evt)[0]["_index"];
-        alert(formatResponseData(priceData[activePoints]));
-        // => activePoints is an array of points on the canvas that are at the same position as the click event.
+        alert   (formatResponseData(priceData[activePoints]));
     };
     historicalGraph = new Chart(ctx, {
         type: 'bar',

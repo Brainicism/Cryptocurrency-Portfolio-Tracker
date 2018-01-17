@@ -1,33 +1,19 @@
 {
-  "name": "mkv_torrent_downloader_and_converter",
+  "name": "cryptocurrency_profile_tracker",
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
   "scripts": {
-    "start": "node downloader"
+    "start": "node app"
   },
   "author": "Brian Le",
   "license": "ISC",
   "dependencies": {
-    "apicache": "^1.1.0",
-    "binance": "^1.1.0",
     "body-parser": "^1.17.1",
-    "cached-request": "^1.1.2",
-    "colors": "^1.1.2",
-    "command-exists": "^1.2.2",
-    "connect-timeout": "^1.9.0",
     "express": "^4.15.2",
-    "formidable": "^1.1.1",
-    "fs-extra": "^2.0.0",
-    "handbrake-js": "^2.1.0",
     "moment": "^2.19.3",
     "node-schedule": "^1.2.5",
-    "ps-node": "^0.1.5",
-    "quadrigacx": "0.0.7",
-    "recursive-readdir": "^2.1.1",
     "request": "^2.83.0",
-    "save": "^2.3.2",
-    "sqlite3": "^3.1.13",
-    "webtorrent": "^0.98.19"
+    "sqlite3": "^3.1.13"
   }
 }
