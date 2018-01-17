@@ -69,7 +69,7 @@ function update(accountId) {
                 resolve({
                     total: {
                         current: total,
-                        pastDay: pastDayPrices ? pastDayPrices.total : null
+                        pastDay: pastDayPrices ? pastDayPrices.total.current : null
                     },
                     coin_info: output,
                     orig: originalBalance
@@ -215,7 +215,7 @@ var j = schedule.scheduleJob('*/5 * * * *', function () {
 function recurringDbUpdate(accountId) {
     update(accountId).then((output) => {
         var date = new Date();
-        console.log("Recurring update: Updating DB at " + moment(date.getTime()).format('MM/D h:mm a') + " | " + (output.total.current - output.orig))
+        console.log(accountId + " | Recurring update: Updating DB at " + moment(date.getTime()).format('MM/D h:mm a') + " | " + (output.total.current - output.orig))
         try {
             addNewPriceData(accountId, Math.floor(date.getTime() / 1000), JSON.stringify(output));
         }

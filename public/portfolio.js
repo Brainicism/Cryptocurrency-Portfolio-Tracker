@@ -62,8 +62,12 @@ function formatResponseData(data, showChange) {
             string += `${coin.balance} ${coin.symbol} @ $${currentPriceString} = $${coin.cad_value}\n`;
         }
     }
-    string += "\nTotal Amount: $" + Math.round(sum);
-    string += "\nOriginal Amount: $" + data.orig;
+    string += `\nCurrent Value: $${Math.round(sum)}`;
+    if (showChange){
+        string += ` (${(100*(data.total.current - data.total.pastDay) / data.total.current).toFixed(2)}%)`;
+    }
+
+    string += "\nOriginal Value: $" + data.orig;
     return string;
 }
 
