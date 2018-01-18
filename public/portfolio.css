@@ -151,3 +151,37 @@
             display: block;
             margin : 0 auto;
        }
+    .error-message{
+        position:fixed;
+        top:50%;
+        left:50%;
+        transform:translate(-50%,-50%);
+        text-align:center;
+    }
+
+    .coins-data-container{
+        text-align:center;
+        background-color:#1976D2;
+        padding-top:50px;
+        padding-bottom:50px
+    }
+
+    .total-profit-container{
+        text-align:center;
+        padding-top:50px;
+    }
+
+    .light-bg-color{
+        background-color:powderblue;
+    }
+
+    .loading-spinner-container{
+        position:fixed;
+        top:50%;
+        left:50%;
+        transform:translate(-50%,-50%);
+    }
+
+    .config-info-container{
+        text-align:center"
+    }

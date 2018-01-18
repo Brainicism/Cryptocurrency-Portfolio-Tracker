@@ -42,11 +42,11 @@ app.get("/crypto/api/update/:accountId", function (req, res) {
 });
 
 app.get("/crypto", function (req, res) {
-    res.sendFile(__dirname + "/public/coin.html")
+    res.sendFile(__dirname + "/public/portfolio.html")
 });
 
 app.get("/crypto/:accountId", function (req, res) {
-    res.sendFile(__dirname + "/public/coin.html")
+    res.sendFile(__dirname + "/public/portfolio.html")
 });
 
 let server = app.listen(1235);
