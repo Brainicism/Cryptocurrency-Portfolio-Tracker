@@ -3,6 +3,11 @@ let prevProfit;
 let historicalGraph;
 let firstBarUpdate = false;
 let historicalPriceDataArray;
+let historicalDateArray;
+toastr.options.timeOut = 0;
+toastr.options.extendedTimeOut = 0;
+toastr.options.allowHtml = true;
+toastr.options.positionClass = "toast-bottom-center";
 $(document).ready(function () {
     setUpGraph();
     initUserData();
@@ -116,7 +121,7 @@ function initUserData() {
         success: function (data) {
             let historicalData = data.historicalData;
             historicalPriceDataArray = historicalData.priceData.reverse();
-            let historicalDateArray = historicalData.dateArray.reverse();
+            historicalDateArray = historicalData.dateArray.reverse();
             updateGraph(historicalPriceDataArray, historicalDateArray);
             if (data.originalBalance) $("#originalBalance").val(data.originalBalance)
             if (data.cryptoBalances) $("#cryptoBalances").text(data.cryptoBalances.balance)
@@ -156,8 +161,15 @@ function getAccountId(index) {
 function setUpGraph() {
     let ctx = document.getElementById("historicalGraph").getContext('2d');
     document.getElementById("historicalGraph").onclick = function (evt) {
-        let activePoints = historicalGraph.getElementsAtEvent(evt)[0]["_index"];
-        alert(formatResponseData(historicalPriceDataArray[activePoints], false));
+        let clickedIndex;
+        if (historicalGraph.getElementsAtEvent(evt)[0]){
+            clickedIndex = historicalGraph.getElementsAtEvent(evt)[0]["_index"];
+        }
+        else{
+            return;
+        }
+        toastr.remove()
+        toastr.success(formatResponseData(historicalPriceDataArray[clickedIndex], false).replace(/\n/g, '<br/>'), historicalDateArray[clickedIndex]).css("width", "500px")
     };
     historicalGraph = new Chart(ctx, {
         type: 'bar',
