@@ -9,7 +9,7 @@ $(document).ready(function () {
     updateData();
     setInterval(updateData, 60000);
 });
-function getConfigInfo() {
+function setConfigInfo() {
     var data = {};
     data.originalBalance = $("#originalBalance").val();
     data.cryptoBalances = $("#cryptoBalances").val();
@@ -26,35 +26,13 @@ function getConfigInfo() {
     });
     return false;
 }
-function promptInfo() {
-    var data = {};
-    data.orig = prompt("Original Amount?", "");
-
-    if (isNaN(data.orig) || data.orig == null) {
-        return showError("Values must be numbers");
-    }
-    $.ajax({
-        url: "/crypto/api/config/" + getAccountId(),
-        type: "POST",
-        data: data,
-        success: function (data) {
-            updateData();
-        },
-        error: function (jXHR, textStatus, errorThrown) {
-            showError(jXHR.status + " " + jXHR.statusText + ". Try again later.")
-        }
-    });
-}
-
 function formatResponseData(data, showChange) {
     var coin_info = data.coin_info;
     var string = "";
-    var sum = 0;
     for (var i = 0; i < coin_info.length; i++) {
         var coin = coin_info[i];
         if (parseFloat(coin.cad_value) > 5) {
-            sum += parseFloat(coin.cad_value);
-            var currentPriceString = `${coin.cost_per_coin.current ? coin.cost_per_coin.current : coin.cost_per_coin}`
+            var currentPriceString = `${coin.cost_per_coin.current ? coin.cost_per_coin.current : coin.cost_per_coin} CAD`
             if (showChange) {
                 var increaseInPastDay = (((coin.cost_per_coin.current - coin.cost_per_coin.pastDay) / coin.cost_per_coin.current) * 100);
                 currentPriceString += ` (${increaseInPastDay > 0 ? "+" + increaseInPastDay.toFixed(2) : increaseInPastDay.toFixed(2)}%)`;
@@ -62,11 +40,10 @@ function formatResponseData(data, showChange) {
             string += `${coin.balance} ${coin.symbol} @ $${currentPriceString} = $${coin.cad_value}\n`;
         }
     }
-    string += `\nCurrent Value: $${Math.round(sum)}`;
-    if (showChange){
-        string += ` (${(100*(data.total.current - data.total.pastDay) / data.total.current).toFixed(2)}%)`;
+    string += `\nCurrent Value: $${data.total.current.toFixed(2)}`;
+    if (showChange) {
+        string += ` (${(100 * (data.total.current - data.total.pastDay) / data.total.current).toFixed(2)}%)`;
     }
-
     string += "\nOriginal Value: $" + data.orig;
     return string;
 }
@@ -82,13 +59,11 @@ function updateData() {
             console.log(data)
             $("#loading_spinner").hide();
             $("#data").show();
-            var obj = $("#coins_data").text(formatResponseData(data, true));
-            obj.html(obj.html().replace(/\n/g, '<br/>'));
             $("#last_update").text("Last Update: " + new Date());
+            updateCoinData(data);
             totalProfit = parseFloat((data.total.current - data.orig).toFixed(2));
-            var raw_date = new Date();
-            var date = moment(raw_date.getTime());
-            var dateString = moment(raw_date.getTime()).format('MM/D h:mm a');
+            var date = moment(new Date().getTime());
+            var dateString = moment(date.valueOf()).format('MM/D h:mm a');
             if (date.minute() % 5 == 0 && historicalGraph.data.labels.indexOf(dateString) == -1) {
                 addToGraph(dateString, totalProfit);
                 prevProfit = totalProfit;
@@ -97,10 +72,10 @@ function updateData() {
                 $("#total").text("Total Profit: " + priceToString(totalProfit));
                 document.title = priceToString(totalProfit);
                 if (totalProfit > 0) {
-                    changeFavicon("/crypto/static/jisoo_happy.png");
+                    changeFavicon("/crypto/static/profit_pos.png");
                 }
                 else {
-                    changeFavicon("/crypto/static/jisoo_angry.png");
+                    changeFavicon("/crypto/static/profit_neg.png");
                 }
             }
         },
@@ -115,6 +90,11 @@ function updateData() {
             }
         }
     });
+}
+
+function updateCoinData(data) {
+    var coinDataText = $("#coins_data").text(formatResponseData(data, true));
+    coinDataText.html(coinDataText.html().replace(/\n/g, '<br/>'));
 }
 
 const changeFavicon = link => {
