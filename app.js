@@ -1,14 +1,13 @@
-var express = require('express')
-var app = express()
-var bodyParser = require('body-parser');
-var fs = require('fs');
-var crypto = require("./crypto.js");
-var path = require("path");
+const express = require('express')
+const app = express()
+const bodyParser = require('body-parser');
+const fs = require('fs');
+const crypto = require("./crypto.js");
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 app.use('/crypto/static', express.static('public'))
 app.get("/crypto/api/user/:accountId", function (req, res) {
-    var accountId = req.params.accountId;
+    let accountId = req.params.accountId;
     crypto.getUserData(accountId).then((data) => {
         res.status(200).send(data);
     }).catch((err) => {
@@ -17,9 +16,9 @@ app.get("/crypto/api/user/:accountId", function (req, res) {
 })
 
 app.post("/crypto/api/config/:accountId", function (req, res) {
-    var data = req.body;
-    var accountId = req.params.accountId;
-    var config = {
+    let data = req.body;
+    let accountId = req.params.accountId;
+    let config = {
         accountId: accountId,
         originalBalance: data.originalBalance,
         cryptoBalances: data.cryptoBalances
@@ -29,7 +28,7 @@ app.post("/crypto/api/config/:accountId", function (req, res) {
 })
 
 app.get("/crypto/api/update/:accountId", function (req, res) {
-    var accountId = req.params.accountId;
+    let accountId = req.params.accountId;
     crypto.update(accountId).then((value) => {
         res.status(200).send(value);
     }).catch((err) => {
@@ -50,5 +49,4 @@ app.get("/crypto/:accountId", function (req, res) {
     res.sendFile(__dirname + "/public/coin.html")
 });
 
-
-var server = app.listen(1235);
+let server = app.listen(1235);

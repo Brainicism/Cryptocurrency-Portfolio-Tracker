@@ -1,18 +1,17 @@
-var request = require('request');
-var coin_prices = [];
-var lastCoinMarketCapUpdate;
-var fs = require("fs");
-var moment = require("moment");
-var schedule = require('node-schedule');
-var redis = require("redis");
-var redisClient = redis.createClient();
+const request = require('request');
+const fs = require("fs");
+const moment = require("moment");
+const schedule = require('node-schedule');
+const redis = require("redis");
+const redisClient = redis.createClient();
 const sqlite3 = require('sqlite3').verbose();
-var firstRun = true;
+let firstRun = true;
+let coin_prices = [];
 
 redisClient.on('error', function (err) {
     console.log("Error " + err);
 });
-let db = new sqlite3.Database('./db/main.db', (err) => {
+const db = new sqlite3.Database('./db/main.db', (err) => {
     if (err) {
         console.error(err);
     }
@@ -24,13 +23,12 @@ let db = new sqlite3.Database('./db/main.db', (err) => {
 
 function update(accountId) {
     return new Promise((resolve, reject) => {
-
         Promise.all([getCoinPrices(), getUserBalances(accountId), getHistoricalData(accountId)])
             .then((results) => {
-                var historicalPriceData = results[2].priceData;
-                var pastDayPrices;
-                var originalBalance = results[1][0];
-                var cryptoBalances = results[1][1];
+                let historicalPriceData = results[2].priceData;
+                let pastDayPrices;
+                let originalBalance = results[1][0];
+                let cryptoBalances = results[1][1];
                 if (historicalPriceData.length > 288) {
                     pastDayPrices = historicalPriceData[288];
                 }
@@ -43,15 +41,15 @@ function update(accountId) {
                 if (originalBalance == null || cryptoBalances == null) {
                     return reject("Values not set");
                 }
-                var output = [];
-                var total = 0;
+                let output = [];
+                let total = 0;
 
-                for (var symbol in coin_prices) {
+                for (let symbol in coin_prices) {
                     if (coin_prices.hasOwnProperty(symbol)) {
                         if (cryptoBalances[symbol] != null) {
-                            var price = parseFloat(coin_prices[symbol]);
-                            var cad_value = parseFloat((cryptoBalances[symbol] * price).toFixed(2))
-                            var pastCostPerCoin = pastDayPrices ? pastDayPrices.coin_info.filter((info) => info.symbol == symbol)[0].cost_per_coin.current : null;
+                            let price = parseFloat(coin_prices[symbol]);
+                            let cad_value = parseFloat((cryptoBalances[symbol] * price).toFixed(2))
+                            let pastCostPerCoin = pastDayPrices ? pastDayPrices.coin_info.filter((info) => info.symbol == symbol)[0].cost_per_coin.current : null;
                             output.push({
                                 symbol: symbol,
                                 balance: cryptoBalances[symbol],
@@ -91,7 +89,7 @@ function getUserBalances(accountId) {
 }
 function getRawCryptoBalances(accountId) {
     return new Promise((resolve, reject) => {
-        var query = `SELECT balance from crypto_balances WHERE account_id = '${accountId}'`;
+        let query = `SELECT balance from crypto_balances WHERE account_id = '${accountId}'`;
         db.all(query, (err, rows) => {
             if (err) {
                 return reject(err)
@@ -107,15 +105,15 @@ function getRawCryptoBalances(accountId) {
 }
 function getCryptoBalances(accountId) {
     return new Promise((resolve, reject) => {
-        var query = `SELECT balance from crypto_balances WHERE account_id = '${accountId}'`;
+        let query = `SELECT balance from crypto_balances WHERE account_id = '${accountId}'`;
         db.all(query, (err, rows) => {
             if (err) {
                 return reject(err)
             }
             if (rows.length == 1) {
-                var result = rows[0].balance.split("\n");
-                var cryptoBalances = {};
-                for (var i = 0; i < result.length; i++) {
+                let result = rows[0].balance.split("\n");
+                let cryptoBalances = {};
+                for (let i = 0; i < result.length; i++) {
                     cryptoBalances[result[i].split(":")[0].trim()] = result[i].split(":")[1].trim();
                 }
                 return resolve(cryptoBalances);
@@ -139,9 +137,8 @@ function getCoinPrices() {
                     if (err) {
                         reject(err);
                     }
-                    lastCoinMarketCapUpdate = new Date();
-                    var ticker_data = JSON.parse(body);
-                    var prices = ticker_data.map((a) => {
+                    let ticker_data = JSON.parse(body);
+                    let prices = ticker_data.map((a) => {
                         //TODO: map exceptions in a better way
                         if (a.symbol == "MIOTA") {
                             a.symbol = "IOTA";
@@ -149,7 +146,7 @@ function getCoinPrices() {
                         return a;
                     })
                     coin_prices = [];
-                    for (var i = 0; i < prices.length; i++) {
+                    for (let i = 0; i < prices.length; i++) {
                         coin_prices[prices[i].symbol] = prices[i].price_cad;
                     }
                     redisClient.setex("coin_prices", 30, JSON.stringify(coin_prices));
@@ -160,7 +157,7 @@ function getCoinPrices() {
     })
 }
 function updateOriginalBalance(accountId, originalBalance) {
-    var query = `REPLACE INTO original_balance VALUES('${accountId}', ${originalBalance})`
+    let query = `REPLACE INTO original_balance VALUES('${accountId}', ${originalBalance})`
     db.run(query, (err) => {
         if (err) {
             console.log(err);
@@ -168,7 +165,7 @@ function updateOriginalBalance(accountId, originalBalance) {
     });
 }
 function updateCryptoBalances(accountId, cryptoBalances) {
-    var query = `REPLACE INTO crypto_balances VALUES('${accountId}', '${cryptoBalances}')`
+    let query = `REPLACE INTO crypto_balances VALUES('${accountId}', '${cryptoBalances}')`
     db.run(query, (err) => {
         if (err) {
             console.log(err);
@@ -178,7 +175,7 @@ function updateCryptoBalances(accountId, cryptoBalances) {
 
 function getOriginalBalance(accountId) {
     return new Promise((resolve, reject) => {
-        var query = `SELECT balance from original_balance WHERE account_id = '${accountId}'`;
+        let query = `SELECT balance from original_balance WHERE account_id = '${accountId}'`;
         db.all(query, (err, rows) => {
             if (err) {
                 return reject(err)
@@ -194,19 +191,19 @@ function getOriginalBalance(accountId) {
 }
 
 function addNewPriceData(accountId, date, priceData) {
-    var query = `INSERT INTO prices VALUES('${accountId}', ${date}, '${priceData}')`
+    let query = `INSERT INTO prices VALUES('${accountId}', ${date}, '${priceData}')`
     db.run(query, (err) => {
         if (err) {
             console.log(err)
         }
     })
 }
-var j = schedule.scheduleJob('*/5 * * * *', function () {
+let j = schedule.scheduleJob('*/5 * * * *', function () {
     db.all(`SELECT account_id from crypto_balances`, (err, rows) => {
         if (err) {
             console.log(err);
         }
-        for (var i = 0; i < rows.length; i++) {
+        for (let i = 0; i < rows.length; i++) {
             recurringDbUpdate(rows[i].account_id);
         }
     })
@@ -214,7 +211,7 @@ var j = schedule.scheduleJob('*/5 * * * *', function () {
 
 function recurringDbUpdate(accountId) {
     update(accountId).then((output) => {
-        var date = new Date();
+        let date = new Date();
         console.log(accountId + " | Recurring update: Updating DB at " + moment(date.getTime()).format('MM/D h:mm a') + " | " + (output.total.current - output.orig))
         try {
             addNewPriceData(accountId, Math.floor(date.getTime() / 1000), JSON.stringify(output));
@@ -229,7 +226,7 @@ function recurringDbUpdate(accountId) {
 }
 
 function getTimeDiff(date1, date2) {
-    var diff = date2.getTime() - date1.getTime();
+    let diff = date2.getTime() - date1.getTime();
     return diff / 1000;
 }
 
@@ -239,7 +236,7 @@ function getHistoricalData(accountId) {
             if (err) {
                 return reject(err);
             }
-            var data = {};
+            let data = {};
             data.priceData = rows.map(function callback(currentValue, index, array) {
                 return JSON.parse(currentValue.price_data);
                 
@@ -256,9 +253,9 @@ function getUserData(accountId) {
     return new Promise((resolve, reject) => {
         Promise.all([getRawCryptoBalances(accountId), getOriginalBalance(accountId), getHistoricalData(accountId)])
             .then((results) => {
-                var cryptoBalances = results[0];
-                var originalBalance = results[1];
-                var historicalData = results[2];
+                let cryptoBalances = results[0];
+                let originalBalance = results[1];
+                let historicalData = results[2];
                 resolve({
                     cryptoBalances: cryptoBalances,
                     originalBalance: originalBalance,
