@@ -97,7 +97,7 @@ function getCryptoBalances(accountId) {
             }
             if (rows.length > 0) {
                 let balances = {};
-                for (let row of rows){
+                for (let row of rows) {
                     balances[row.ticker] = row.balance;
                 }
                 return resolve(balances);
@@ -142,11 +142,7 @@ function getCoinPrices() {
 }
 function updateOriginalBalance(accountId, originalBalance) {
     let query = "REPLACE INTO original_balance VALUES(?, ?)";
-    db.run(query, [accountId, originalBalance], (err) => {
-        if (err) {
-            console.log(err);
-        }
-    });
+    db.run(query, [accountId, originalBalance], dbErrorCallback);
 }
 function updateCryptoBalances(accountId, cryptoBalances) {
     let remove_query = "DELETE FROM crypto_balances WHERE account_id = ?";
@@ -156,11 +152,7 @@ function updateCryptoBalances(accountId, cryptoBalances) {
             return console.log(err);
         }
         for (let cryptoBalance of cryptoBalances) {
-            db.run(insert_query, [accountId, cryptoBalance.ticker, cryptoBalance.balance], (err) => {
-                if (err) {
-                    console.log(err);
-                }
-            });
+            db.run(insert_query, [accountId, cryptoBalance.ticker, cryptoBalance.balance], dbErrorCallback);
         }
     });
 }
@@ -184,11 +176,7 @@ function getOriginalBalance(accountId) {
 
 function addNewPriceData(accountId, date, priceData) {
     let query = "INSERT INTO prices VALUES(?, ?, ?)";
-    db.run(query, [accountId, date, priceData], (err) => {
-        if (err) {
-            console.log(err)
-        }
-    })
+    db.run(query, [accountId, date, priceData], dbErrorCallback)
 }
 let j = schedule.scheduleJob('*/5 * * * *', function () {
     let query = "SELECT DISTINCT account_id from crypto_balances";
@@ -256,13 +244,18 @@ function getUserData(accountId) {
                     historicalData: historicalData
                 })
             })
-            .catch((err) => { console.log(err); reject(err) });
+            .catch((err) => { reject(err) });
     });
 }
 
 function saveConfig(config) {
     updateOriginalBalance(config.accountId, config.originalBalance);
     updateCryptoBalances(config.accountId, config.cryptoBalances);
+}
+
+function dbErrorCallback(err) {
+    //TODO: do something other than log the error
+    console.log(err);
 }
 module.exports.update = update;
 module.exports.getUserData = getUserData;
