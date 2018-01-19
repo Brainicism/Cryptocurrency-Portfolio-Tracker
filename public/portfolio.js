@@ -137,7 +137,6 @@ function initUserData() {
         url: "/crypto/api/user/" + getAccountId(),
         type: "GET",
         success: function (data) {
-            console.log(data)
             let historicalData = data.historicalData;
             historicalPriceDataArray = historicalData.priceData.reverse();
             historicalDateArray = historicalData.dateArray.reverse();

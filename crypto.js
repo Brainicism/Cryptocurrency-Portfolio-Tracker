@@ -16,8 +16,6 @@ const db = new sqlite3.Database('./db/main.db', (err) => {
         console.error(err);
     }
 
-    // db.run("DELETE from crypto_balances where account_id = 'brainicism'")
-    //db.run("DROP TABLE crypto_balances");
     // db.run('CREATE TABLE prices(account_id text, date integer, price_data text)');
     //  db.run('CREATE TABLE crypto_balances(account_id text, ticker text, balance real)');
     //  db.run('CREATE TABLE original_balance(account_id text, balance real, CONSTRAINT unique_id UNIQUE(account_id))');
@@ -102,7 +100,6 @@ function getCryptoBalances(accountId) {
                 for (let row of rows){
                     balances[row.ticker] = row.balance;
                 }
-                console.log(balances)
                 return resolve(balances);
             }
             else {
@@ -194,7 +191,7 @@ function addNewPriceData(accountId, date, priceData) {
     })
 }
 let j = schedule.scheduleJob('*/5 * * * *', function () {
-    let query = "SELECT account_id from crypto_balances";
+    let query = "SELECT DISTINCT account_id from crypto_balances";
     db.all(query, (err, rows) => {
         if (err) {
             console.log(err);
