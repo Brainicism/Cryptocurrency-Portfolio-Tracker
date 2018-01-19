@@ -21,7 +21,10 @@ const db = new sqlite3.Database('./db/main.db', (err) => {
     //  db.run('CREATE TABLE original_balance(account_id text, balance real, CONSTRAINT unique_id UNIQUE(account_id))');
     console.log('Connected to the sick database.');
 });
-
+process.on('unhandledRejection', (reason, p) => {
+    console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+});
+update("fakedata");
 function update(accountId) {
     return new Promise((resolve, reject) => {
         Promise.all([getCoinPrices(), getUserBalances(accountId), getHistoricalData(accountId)])
@@ -43,13 +46,15 @@ function update(accountId) {
                     return reject("Values not set");
                 }
                 let output = [];
+                let invalidTickers = [];
                 let total = 0;
-                for (let symbol in coin_prices) {
-                    if (coin_prices.hasOwnProperty(symbol)) {
-                        if (cryptoBalances[symbol]) {
+                for (let symbol in cryptoBalances) {
+                    if (cryptoBalances.hasOwnProperty(symbol)) {
+                        if (coin_prices[symbol] != null) {
                             let price = parseFloat(coin_prices[symbol]);
                             let cad_value = parseFloat((cryptoBalances[symbol] * price).toFixed(2))
-                            let pastCostPerCoin = pastDayPrices ? pastDayPrices.coin_info.filter((info) => info.symbol == symbol)[0].cost_per_coin.current : null;
+                            let pastCostPerCoin = (pastDayPrices && pastDayPrices.coin_info.filter((info) => info.symbol == symbol)[0])
+                                ? pastDayPrices.coin_info.filter((info) => info.symbol == symbol)[0].cost_per_coin.current : null;
                             output.push({
                                 symbol: symbol,
                                 balance: cryptoBalances[symbol],
@@ -60,15 +65,19 @@ function update(accountId) {
                                 cad_value: cad_value
                             });
                             total += cad_value;
+                        } else {
+                            invalidTickers.push(symbol);
                         }
                     }
                 }
+
                 output.sort((a, b) => { return a.cad_value < b.cad_value })
                 resolve({
                     total: {
                         current: total,
                         pastDay: pastDayPrices ? pastDayPrices.total.current : null
                     },
+                    invalidTickers: invalidTickers,
                     coin_info: output,
                     orig: originalBalance
                 })
@@ -255,7 +264,9 @@ function saveConfig(config) {
 
 function dbErrorCallback(err) {
     //TODO: do something other than log the error
-    console.log(err);
+    if (err) {
+        console.log(err);
+    }
 }
 module.exports.update = update;
 module.exports.getUserData = getUserData;

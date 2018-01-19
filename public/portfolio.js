@@ -83,6 +83,7 @@ function updateData() {
             $("#loading_spinner").hide();
             $("#data").show();
             $("#last_update").text("Last Update: " + new Date());
+            if (data.invalidTickers.length) showInvalidTickersError(data.invalidTickers);
             updateCoinData(data);
             totalProfit = parseFloat((data.total.current - data.orig).toFixed(2));
             let date = moment(new Date().getTime());
@@ -114,7 +115,9 @@ function updateData() {
         }
     });
 }
-
+function showInvalidTickersError(invalidTickers){
+    toastr.error("The following tickers are invalid. Ensure that they are consistent with the tickers found on CMC: <br/>" + invalidTickers.join("<br/>"), {timeOut: 10000, extendedTimeOut: 10000});
+}
 function updateCoinData(data) {
     let coinDataText = $("#coins_data").text(formatResponseData(data, true));
     coinDataText.html(coinDataText.html().replace(/\n/g, '<br/>'));
