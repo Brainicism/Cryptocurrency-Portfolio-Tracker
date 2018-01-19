@@ -16,8 +16,8 @@ $(document).ready(function () {
 });
 function setConfigInfo() {
     let data = {};
-    data.originalBalance = $("#originalBalance").val();
-    data.cryptoBalances = $("#cryptoBalances").val();
+    data.originalBalance = $("#originalBalance").val().trim();
+    data.cryptoBalances = $("#cryptoBalances").val().trim();
     $.ajax({
         url: "/crypto/api/config/" + getAccountId(),
         type: "POST",

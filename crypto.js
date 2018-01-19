@@ -15,6 +15,8 @@ const db = new sqlite3.Database('./db/main.db', (err) => {
     if (err) {
         console.error(err);
     }
+
+    //   db.run("DELETE from crypto_balances where account_id = 'dsafafsd'")
     // db.run('CREATE TABLE prices(account_id text, date integer, price_data text)');
     // db.run('CREATE TABLE crypto_balances(account_id text, balance text, CONSTRAINT unique_id UNIQUE(account_id))');
     //  db.run('CREATE TABLE original_balance(account_id text, balance real, CONSTRAINT unique_id UNIQUE(account_id))');
@@ -89,8 +91,8 @@ function getUserBalances(accountId) {
 }
 function getRawCryptoBalances(accountId) {
     return new Promise((resolve, reject) => {
-        let query = `SELECT balance from crypto_balances WHERE account_id = '${accountId}'`;
-        db.all(query, (err, rows) => {
+        let query = "SELECT balance from crypto_balances WHERE account_id = ?";
+        db.all(query, [accountId], (err, rows) => {
             if (err) {
                 return reject(err)
             }
@@ -105,8 +107,8 @@ function getRawCryptoBalances(accountId) {
 }
 function getCryptoBalances(accountId) {
     return new Promise((resolve, reject) => {
-        let query = `SELECT balance from crypto_balances WHERE account_id = '${accountId}'`;
-        db.all(query, (err, rows) => {
+        let query = "SELECT balance from crypto_balances WHERE account_id = ?";
+        db.all(query, [accountId], (err, rows) => {
             if (err) {
                 return reject(err)
             }
@@ -157,16 +159,16 @@ function getCoinPrices() {
     })
 }
 function updateOriginalBalance(accountId, originalBalance) {
-    let query = `REPLACE INTO original_balance VALUES('${accountId}', ${originalBalance})`
-    db.run(query, (err) => {
+    let query = "REPLACE INTO original_balance VALUES(?, ?)";
+    db.run(query, [accountId, originalBalance], (err) => {
         if (err) {
             console.log(err);
         }
     });
 }
 function updateCryptoBalances(accountId, cryptoBalances) {
-    let query = `REPLACE INTO crypto_balances VALUES('${accountId}', '${cryptoBalances}')`
-    db.run(query, (err) => {
+    let query = "REPLACE INTO crypto_balances VALUES(?, ?)";
+    db.run(query, [accountId, cryptoBalances], (err) => {
         if (err) {
             console.log(err);
         }
@@ -175,8 +177,8 @@ function updateCryptoBalances(accountId, cryptoBalances) {
 
 function getOriginalBalance(accountId) {
     return new Promise((resolve, reject) => {
-        let query = `SELECT balance from original_balance WHERE account_id = '${accountId}'`;
-        db.all(query, (err, rows) => {
+        let query = "SELECT balance from original_balance WHERE account_id = ?";
+        db.all(query, [accountId], (err, rows) => {
             if (err) {
                 return reject(err)
             }
@@ -191,15 +193,16 @@ function getOriginalBalance(accountId) {
 }
 
 function addNewPriceData(accountId, date, priceData) {
-    let query = `INSERT INTO prices VALUES('${accountId}', ${date}, '${priceData}')`
-    db.run(query, (err) => {
+    let query = "INSERT INTO prices VALUES(?, ?, ?)";
+    db.run(query, [accountId, date, priceData], (err) => {
         if (err) {
             console.log(err)
         }
     })
 }
 let j = schedule.scheduleJob('*/5 * * * *', function () {
-    db.all(`SELECT account_id from crypto_balances`, (err, rows) => {
+    let query = "SELECT account_id from crypto_balances";
+    db.all(query, (err, rows) => {
         if (err) {
             console.log(err);
         }
@@ -232,14 +235,15 @@ function getTimeDiff(date1, date2) {
 
 function getHistoricalData(accountId) {
     return new Promise((resolve, reject) => {
-        db.all(`SELECT date, price_data FROM prices WHERE account_id = '${accountId}' ORDER BY date DESC LIMIT 576`, (err, rows) => {
+        let query = "SELECT date, price_data FROM prices WHERE account_id = ? ORDER BY date DESC LIMIT 576";
+        db.all(query, [accountId], (err, rows) => {
             if (err) {
                 return reject(err);
             }
             let data = {};
             data.priceData = rows.map(function callback(currentValue, index, array) {
                 return JSON.parse(currentValue.price_data);
-                
+
             });
             data.dateArray = rows.map(function callback(currentValue, index, array) {
                 return moment(new Date(currentValue.date * 1000)).format('MM/D h:mm a');
