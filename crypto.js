@@ -16,9 +16,10 @@ const db = new sqlite3.Database('./db/main.db', (err) => {
         console.error(err);
     }
 
-    //   db.run("DELETE from crypto_balances where account_id = 'dsafafsd'")
+    // db.run("DELETE from crypto_balances where account_id = 'brainicism'")
+    //db.run("DROP TABLE crypto_balances");
     // db.run('CREATE TABLE prices(account_id text, date integer, price_data text)');
-    // db.run('CREATE TABLE crypto_balances(account_id text, balance text, CONSTRAINT unique_id UNIQUE(account_id))');
+    //  db.run('CREATE TABLE crypto_balances(account_id text, ticker text, balance real)');
     //  db.run('CREATE TABLE original_balance(account_id text, balance real, CONSTRAINT unique_id UNIQUE(account_id))');
     console.log('Connected to the sick database.');
 });
@@ -45,10 +46,9 @@ function update(accountId) {
                 }
                 let output = [];
                 let total = 0;
-
                 for (let symbol in coin_prices) {
                     if (coin_prices.hasOwnProperty(symbol)) {
-                        if (cryptoBalances[symbol] != null) {
+                        if (cryptoBalances[symbol]) {
                             let price = parseFloat(coin_prices[symbol]);
                             let cad_value = parseFloat((cryptoBalances[symbol] * price).toFixed(2))
                             let pastCostPerCoin = pastDayPrices ? pastDayPrices.coin_info.filter((info) => info.symbol == symbol)[0].cost_per_coin.current : null;
@@ -89,36 +89,21 @@ function getUserBalances(accountId) {
             .catch(err => reject(err));
     })
 }
-function getRawCryptoBalances(accountId) {
-    return new Promise((resolve, reject) => {
-        let query = "SELECT balance from crypto_balances WHERE account_id = ?";
-        db.all(query, [accountId], (err, rows) => {
-            if (err) {
-                return reject(err)
-            }
-            if (rows.length == 1) {
-                return resolve(rows[0]);
-            }
-            else {
-                return resolve(null);
-            }
-        })
-    })
-}
+
 function getCryptoBalances(accountId) {
     return new Promise((resolve, reject) => {
-        let query = "SELECT balance from crypto_balances WHERE account_id = ?";
+        let query = "SELECT ticker, balance from crypto_balances WHERE account_id = ?";
         db.all(query, [accountId], (err, rows) => {
             if (err) {
                 return reject(err)
             }
-            if (rows.length == 1) {
-                let result = rows[0].balance.split("\n");
-                let cryptoBalances = {};
-                for (let i = 0; i < result.length; i++) {
-                    cryptoBalances[result[i].split(":")[0].trim()] = result[i].split(":")[1].trim();
+            if (rows.length > 0) {
+                let balances = {};
+                for (let row of rows){
+                    balances[row.ticker] = row.balance;
                 }
-                return resolve(cryptoBalances);
+                console.log(balances)
+                return resolve(balances);
             }
             else {
                 return resolve(null);
@@ -167,10 +152,18 @@ function updateOriginalBalance(accountId, originalBalance) {
     });
 }
 function updateCryptoBalances(accountId, cryptoBalances) {
-    let query = "REPLACE INTO crypto_balances VALUES(?, ?)";
-    db.run(query, [accountId, cryptoBalances], (err) => {
+    let remove_query = "DELETE FROM crypto_balances WHERE account_id = ?";
+    let insert_query = "INSERT INTO crypto_balances VALUES(?, ?, ?)";
+    db.run(remove_query, [accountId], (err) => {
         if (err) {
-            console.log(err);
+            return console.log(err);
+        }
+        for (let cryptoBalance of cryptoBalances) {
+            db.run(insert_query, [accountId, cryptoBalance.ticker, cryptoBalance.balance], (err) => {
+                if (err) {
+                    console.log(err);
+                }
+            });
         }
     });
 }
@@ -255,7 +248,7 @@ function getHistoricalData(accountId) {
 
 function getUserData(accountId) {
     return new Promise((resolve, reject) => {
-        Promise.all([getRawCryptoBalances(accountId), getOriginalBalance(accountId), getHistoricalData(accountId)])
+        Promise.all([getCryptoBalances(accountId), getOriginalBalance(accountId), getHistoricalData(accountId)])
             .then((results) => {
                 let cryptoBalances = results[0];
                 let originalBalance = results[1];

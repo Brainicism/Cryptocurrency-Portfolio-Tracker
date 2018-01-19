@@ -4,8 +4,8 @@ let historicalGraph;
 let firstBarUpdate = false;
 let historicalPriceDataArray;
 let historicalDateArray;
-toastr.options.timeOut = 0;
-toastr.options.extendedTimeOut = 0;
+toastr.options.timeOut = 3000;
+toastr.options.extendedTimeOut = 3000;
 toastr.options.allowHtml = true;
 toastr.options.positionClass = "toast-bottom-center";
 $(document).ready(function () {
@@ -17,7 +17,26 @@ $(document).ready(function () {
 function setConfigInfo() {
     let data = {};
     data.originalBalance = $("#originalBalance").val().trim();
-    data.cryptoBalances = $("#cryptoBalances").val().trim();
+    let cryptoBalancesInput = $("#cryptoBalances").val().trim();
+    let regExp = new RegExp("^[A-Za-z0-9]+\\s*:\\s*([0-9]*[.])?[0-9]+$");
+    let invalidInputs = [];
+    let validInputs = [];
+    for (let line of cryptoBalancesInput.split("\n")) {
+        if (!regExp.test(line)) {
+            invalidInputs.push(line);
+        }
+        else{
+            validInputs.push({
+                ticker: line.split(":")[0],
+                balance: line.split(":")[1]
+            })
+        }
+    }
+    data.cryptoBalances = validInputs;
+    if (invalidInputs.length > 0) {
+        toastr.error("The following inputs are invalid: <br/>" + invalidInputs.join("<br/>"))
+        return false;
+    }
     $.ajax({
         url: "/crypto/api/config/" + getAccountId(),
         type: "POST",
@@ -61,7 +80,6 @@ function updateData() {
         url: "/crypto/api/update/" + getAccountId(),
         type: "GET",
         success: function (data) {
-            console.log(data)
             $("#loading_spinner").hide();
             $("#data").show();
             $("#last_update").text("Last Update: " + new Date());
@@ -119,17 +137,29 @@ function initUserData() {
         url: "/crypto/api/user/" + getAccountId(),
         type: "GET",
         success: function (data) {
+            console.log(data)
             let historicalData = data.historicalData;
             historicalPriceDataArray = historicalData.priceData.reverse();
             historicalDateArray = historicalData.dateArray.reverse();
             updateGraph(historicalPriceDataArray, historicalDateArray);
-            if (data.originalBalance) $("#originalBalance").val(data.originalBalance)
-            if (data.cryptoBalances) $("#cryptoBalances").text(data.cryptoBalances.balance)
+            if (data.cryptoBalances) fillCryptoBalanceInput(data.cryptoBalances)
+            if (data.originalBalance) $("#originalBalance").val(data.originalBalance);
         },
         error: function (jXHR, textStatus, errorThrown) {
             showError(jXHR.status + " " + jXHR.statusText + ". Try again later.")
         }
     });
+}
+
+function fillCryptoBalanceInput(balanceObject){
+    let balances = [];
+    for (var key in balanceObject) {
+        if (balanceObject.hasOwnProperty(key)) {
+            balances.push(key + ": " + balanceObject[key]);
+        }
+    }
+    $("#cryptoBalances").text(balances.join("\n"));
+
 }
 
 function updateGraph(priceArray, dateArray) {
@@ -162,14 +192,15 @@ function setUpGraph() {
     let ctx = document.getElementById("historicalGraph").getContext('2d');
     document.getElementById("historicalGraph").onclick = function (evt) {
         let clickedIndex;
-        if (historicalGraph.getElementsAtEvent(evt)[0]){
+        if (historicalGraph.getElementsAtEvent(evt)[0]) {
             clickedIndex = historicalGraph.getElementsAtEvent(evt)[0]["_index"];
         }
-        else{
+        else {
             return;
         }
         toastr.remove()
-        toastr.success(formatResponseData(historicalPriceDataArray[clickedIndex], false).replace(/\n/g, '<br/>'), historicalDateArray[clickedIndex]).css("width", "500px")
+        toastr.success(formatResponseData(historicalPriceDataArray[clickedIndex], false).replace(/\n/g, '<br/>'), historicalDateArray[clickedIndex],
+            { timeOut: 0, extendedTimeOut: 0 }).css("width", "500px")
     };
     historicalGraph = new Chart(ctx, {
         type: 'bar',
