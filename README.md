@@ -4,6 +4,5 @@ A simple web app to keep track of a cryptocurrency portfolio's trends. Page is a
 
 
 ## Usage
-Pick an arbitrary ID and navigate to `https://lovearrowshoot.com/crypto/[id]`  
+Pick an arbitrary ID and navigate to `localhost:1235/crypto/[id]`  
 Enter the original amount invested, and a new line separated list of cryptocurrencies (ticker as specified on CoinMarketCap) and the amount owned, separated by colon.
-Live demo can be found at https://lovearrowshoot.com/crypto/1
